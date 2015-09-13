@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testCaseDPTS", "testCaseDPTS\testCaseDPTS.vcxproj", "{0004AA10-90B9-44F4-8BD6-AEBD7949CD42}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0004AA10-90B9-44F4-8BD6-AEBD7949CD42}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0004AA10-90B9-44F4-8BD6-AEBD7949CD42}.Debug|Win32.Build.0 = Debug|Win32
+		{0004AA10-90B9-44F4-8BD6-AEBD7949CD42}.Release|Win32.ActiveCfg = Release|Win32
+		{0004AA10-90B9-44F4-8BD6-AEBD7949CD42}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
