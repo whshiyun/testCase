@@ -23,6 +23,6 @@ int planEmptyTS(
 	unsigned int leastEmptyTSNum, 
 	unsigned int inNum, 
 	P_PLAN_INPUT_UNIT pIn, 
-	P_PLAN_OUTPUT pOut);
+	P_PLAN_OUTPUT_UNIT pOut);
 	
 #endif
