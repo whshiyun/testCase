@@ -5,6 +5,7 @@
 
 #define USED_TS_FLAG					0x00
 #define EMPTY_TS_FLAG					0x01
+#define SYNC_TS_FLAG					0x02
 
 #define MAX_DELAY_TS_NUM_PER_CYCLE		2
 
@@ -60,10 +61,11 @@ static void buildHeap(unsigned int bufLen, unsigned char *buf) {
 
 static void sort(unsigned int num, unsigned char *buf) {
 
-	unsigned int i = num-1, j = 0;
+	unsigned int i = 0, j = 0;
 	if(0 == num)
 		return ;
 
+	i = num - 1;
 	buildHeap(num, buf);
 
 	while(i > 0) {
@@ -73,17 +75,6 @@ static void sort(unsigned int num, unsigned char *buf) {
 		neatemHeap(0, i, buf);
 		i --;
 	}
-}
-
-void testSort() {
-	unsigned int i = 0;
-	unsigned char buf[] = {5, 7, 2, 4, 2, 9, 6, 5, 3, 3, 3, 1};
-	sort(sizeof(buf), buf);
-
-	for(i=0; i<sizeof(buf); i++) {
-		printf("%d ", buf[i]);
-	}
-	printf("\r\n");
 }
 
 static int disperseEmptyTS(unsigned int extraTSNum, unsigned int cycleNum, unsigned char *pPerCycleEmptyTSNum) {
@@ -121,20 +112,74 @@ void expressionEmptyTS(unsigned int cycleLen, unsigned int cycleNum, unsigned ch
 	for(i=0; i<cycleNum; i++) {
 		pos += cycleLen;
 		for(j=0; j<pPerCycleEmptyTSNum[i]; j++) {
-			pos ++;
+			//pos ++;
 			pEmptyPos[k] = pos;
+			pos++;
 			k ++;
 		}
 	}
 }
 
-static int trySyncEmptyTSPos(unsigned int pos, P_PLAN_INPUT_UNIT *pCycle, unsigned int totalEmptyTSNum, unsigned char *pEmptyPos) {
+static int trySyncEmptyTSPos(unsigned int pos, P_PLAN_INPUT_UNIT pCycle, unsigned int totalEmptyTSNum, unsigned char *pEmptyPos) {
 
-	unsigned int i = 0;
+	unsigned int i = 0, j = 0, k = 0, ret = 0;
+	unsigned int variableEmptyTSNum = 0;
 	unsigned char *line = (unsigned char *)malloc(pos);
 
+	if(pos < 1) {
+		free(line);
+		return -2;
+	}
+
+	memset(line, USED_TS_FLAG, pos);
+	sort(totalEmptyTSNum, pEmptyPos);
+
+	for(i=0; i<totalEmptyTSNum; i++) {
+		line[pEmptyPos[i]] = EMPTY_TS_FLAG;
+		if(pEmptyPos[i] >= pos)
+			variableEmptyTSNum ++;
+	}
+
+	if(0 == variableEmptyTSNum) {
+		free(line);
+		return -1;
+	}
+
+	if(EMPTY_TS_FLAG == line[pos-1])
+		ret ++;
+	for(i=(pos-1); i>0; i--) {
+		if(EMPTY_TS_FLAG != line[i-1])
+			break;
+		pos --;
+		ret ++;
+	}
+
+	for(i=0; i<pos; ) {
+
+		if(EMPTY_TS_FLAG == line[i]) {
+			i ++;
+			continue;
+		}
+
+		if(j >= pCycle->TSNum)
+			j = 0;
+
+		if((i + pCycle->pTTSNumInTS[j]) > pos) {
+			ret += (pos - i);
+		} else {
+			for(k=0; k<pCycle->pTTSNumInTS[j]; k++) {
+				if(EMPTY_TS_FLAG == line[i+k]) {
+					free(line);
+					return -1;
+				}
+				line[i+k] = USED_TS_FLAG;
+			}
+			i += k;
+		}
+	}
+
 	free(line);
-	return 0;
+	return ret;
 }
 
 int planEmptyTS(

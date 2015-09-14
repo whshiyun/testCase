@@ -38,10 +38,6 @@ extern "C" {
 int _tmain(int argc, _TCHAR* argv[])
 {
 
-	extern void testSort();
-	testSort();
-
-	return 0;
 	inti();
 	netCycle *cycle[MAX_NODE_NUM];
 
