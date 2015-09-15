@@ -43,17 +43,17 @@ int _tmain(int argc, _TCHAR* argv[])
 	PLAN_OUTPUT_UNIT out[2];
 
 	in[0].TSNum = 3;
-	in[0].totalTTSNum = 6;
+	in[0].totalTTSNum = 7;
 	in[0].pTTSNumInTS = (unsigned char *)malloc(in[0].TSNum);
-	in[0].pTTSNumInTS[0] = 1;
+	in[0].pTTSNumInTS[0] = 2;
 	in[0].pTTSNumInTS[1] = 2;
 	in[0].pTTSNumInTS[2] = 3;
 
 	in[1].TSNum = 3;
-	in[1].totalTTSNum = 6;
+	in[1].totalTTSNum = 9;
 	in[1].pTTSNumInTS = (unsigned char *)malloc(in[0].TSNum);
 	in[1].pTTSNumInTS[0] = 3;
-	in[1].pTTSNumInTS[1] = 2;
+	in[1].pTTSNumInTS[1] = 5;
 	in[1].pTTSNumInTS[2] = 1;
 
 	extern int planEmptyTS(

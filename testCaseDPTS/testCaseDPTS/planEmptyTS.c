@@ -149,7 +149,8 @@ static int trySyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 	//sort(totalEmptyTSNum, pEmptyPos);
 
 	for(i=0; i<totalEmptyTSNum; i++) {
-		line[pEmptyPos[i]] = EMPTY_TS_FLAG;
+		if(pEmptyPos[i] < pos)
+			line[pEmptyPos[i]] = EMPTY_TS_FLAG;
 		if((pEmptyPos[i] >= pos) && (pEmptyPos[i] < endPos))
 			variableEmptyTSNum ++;
 	}
@@ -179,11 +180,11 @@ static int trySyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 			j = 0;
 
 		if((i + pCycle->pTTSNumInTS[j]) > pos) {
-			if((pos - i) > variableEmptyTSNum) {
+			if((pos - i + 1) > variableEmptyTSNum) {
 				free(line);
 				return -1;
 			}
-			ret += (pos - i);
+			ret += (pos - i + 1);
 			break;
 		} else {
 			for(k=0; k<pCycle->pTTSNumInTS[j]; k++) {
@@ -195,7 +196,12 @@ static int trySyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 			}
 			i += k;
 		}
+
+		j ++;
 	}
+
+	if(i == pos)
+		ret ++;
 
 	free(line);
 	return ret;
@@ -218,7 +224,8 @@ static int setSyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 	sort(totalEmptyTSNum, pEmptyPos);
 
 	for(i=0; i<totalEmptyTSNum; i++) {
-		line[pEmptyPos[i]] = EMPTY_TS_FLAG;
+		if(pEmptyPos[i] < pos)
+			line[pEmptyPos[i]] = EMPTY_TS_FLAG;
 		if((pEmptyPos[i] >= pos) && (pEmptyPos[i] < endPos))
 			variableEmptyTSNum ++;
 	}
@@ -255,14 +262,14 @@ static int setSyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 			j = 0;
 
 		if((i + pCycle->pTTSNumInTS[j]) > pos) {
-			if((pos - i) > variableEmptyTSNum) {
+			if((pos - i + 1) > variableEmptyTSNum) {
 				free(line);
 				return -1;
 			}
-			for(k=0; k<(pos - i); k++) {
+			for(k=0; k<(pos - i + 1); k++) {
 				pEmptyPos[firstVariableEmptyTSSN + k] = (i + k);
 			}
-			ret += (pos - i);
+			ret += (pos - i + 1);
 			break;
 		} else {
 			for(k=0; k<pCycle->pTTSNumInTS[j]; k++) {
@@ -276,6 +283,11 @@ static int setSyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 		}
 	}
 
+	if(i == pos) {
+		ret ++;
+		pEmptyPos[firstVariableEmptyTSSN] = pos;
+	}
+
 	free(line);
 	return ret;
 }
@@ -283,25 +295,44 @@ static int setSyncEmptyTSPos(unsigned int pos, unsigned int endPos, P_PLAN_INPUT
 static int findInsertPos(unsigned int startPos, unsigned int endPos, unsigned int inNum, P_PLAN_INPUT_UNIT pIn, P_PLAN_OUTPUT_UNIT pOut, unsigned int *emptyTSNum) {
 
 	int val = 0;
-	unsigned int i = 0, j = 0, ret = 0;
+	unsigned int i = 0, j = 0, init_i, ret = 0;
 	unsigned int *pTemp = NULL;
+	unsigned char *errorRecord = NULL;
 	unsigned char **insertPosDelayTSNum = NULL;
 
 	(*emptyTSNum) = 255;
 
-	pTemp = (unsigned int *)malloc(inNum);
-	insertPosDelayTSNum = (unsigned char **)malloc(inNum);
+	pTemp = (unsigned int *)malloc(inNum*sizeof(unsigned int));
+	memset(pTemp, 255, inNum*sizeof(unsigned int));
+	errorRecord = (unsigned char *)malloc(inNum);
+	memset(errorRecord, 0, inNum);
+	insertPosDelayTSNum = (unsigned char **)malloc(inNum*sizeof(char *));
 	for(i=0; i<inNum; i++) {
 		insertPosDelayTSNum[i] = (unsigned char *)malloc(endPos);
 	}
 
-	for(i=startPos+2; i<endPos; i++) {/* 前面空两个 */
-		for(j=0; i<inNum; j++) {
+	if(0 == startPos)
+		init_i = 1;
+	else 
+		init_i = startPos + 2;
+	for(i=init_i; i<endPos; i++) {/* 前面空两个 */
+		for(j=0; j<inNum; j++) {
 			val = trySyncEmptyTSPos(i, endPos, &pIn[j], pOut[j].emptyTSNum, pOut[j].emptyTSPos);
-			if(-1 == val)
-				return (-i);
-			else if(val < 0)
-				return (-inNum);
+			if(-1 == val) {
+				errorRecord[j] ++;
+				if(errorRecord[j] == (endPos - 1)) {
+					ret = (-j);
+					goto findInsertPos_end;
+				}
+				break;
+			}
+			else if(val < 0) {
+				if(i == init_i) {
+					ret = (-inNum);
+					goto findInsertPos_end;
+				}
+				goto findInsertPos_end;
+			}
 			insertPosDelayTSNum[j][i] = val;
 			pTemp[j] = insertPosDelayTSNum[j][i];
 		}
@@ -311,11 +342,13 @@ static int findInsertPos(unsigned int startPos, unsigned int endPos, unsigned in
 		}
 	}
 
+findInsertPos_end :
 	for(i=0; i<inNum; i++) {
 		free(insertPosDelayTSNum[i]);
 	}
 	free(insertPosDelayTSNum);
 	free(pTemp);
+	free(errorRecord);
 
 	return ret;
 }
@@ -344,7 +377,7 @@ int planEmptyTS(
 
 	cycleNum = (unsigned char *)malloc(inNum);
 
-	perCycleEmptyTSNum = (unsigned char **)malloc(inNum);
+	perCycleEmptyTSNum = (unsigned char **)malloc(inNum*sizeof(char *));
 	for(i=0; i<inNum; i++) {
 		perCycleEmptyTSNum[i] = (unsigned char *)malloc(TSNumPerLine);
 	}
@@ -367,7 +400,7 @@ int planEmptyTS(
 
 PLAN_EMPTY_TS :
 
-	memset(insertPos, (TSNumPerLine-protectTSNum), leastEmptyTSNum);
+	memset(insertPos, TSNumPerLine-2, leastEmptyTSNum);
 	for(i=0; i<leastEmptyTSNum; i++) {
 
 		sort(i, insertPos);
@@ -389,8 +422,10 @@ PLAN_EMPTY_TS :
 					insertPos[i] = tempVal;
 				}
 			} else {
-				if(abs(tempVal) >= inNum)
-					return -1;
+				if(abs(tempVal) >= inNum) {
+					//return -1;
+					continue;
+				}
 				else {
 					pOut[abs(tempVal)].emptyTSNum += pIn[abs(tempVal)].totalTTSNum;
 					cycleNum[abs(tempVal)] --;
