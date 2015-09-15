@@ -17,6 +17,7 @@ typedef struct {
 	unsigned char emptyTSAttr[MAX_EMPTY_TS_NUM];
 }PLAN_OUTPUT_UNIT, *P_PLAN_OUTPUT_UNIT;
 
+/*
 int planEmptyTS(
 	unsigned int TSNumPerLine, 
 	unsigned int protectTSNum, 
@@ -24,5 +25,6 @@ int planEmptyTS(
 	unsigned int inNum, 
 	P_PLAN_INPUT_UNIT pIn, 
 	P_PLAN_OUTPUT_UNIT pOut);
+	*/
 	
 #endif

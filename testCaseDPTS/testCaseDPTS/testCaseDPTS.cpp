@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include <stdlib.h>
 #include "TimeSlot.h"
 #include "netCycle.h"
 #include "planEmptyTS.h"
@@ -37,6 +38,35 @@ bool runOnce(netCycle *cycle[MAX_NODE_NUM]) {
 extern "C" {
 int _tmain(int argc, _TCHAR* argv[])
 {
+
+	PLAN_INPUT_UNIT in[2];
+	PLAN_OUTPUT_UNIT out[2];
+
+	in[0].TSNum = 3;
+	in[0].totalTTSNum = 6;
+	in[0].pTTSNumInTS = (unsigned char *)malloc(in[0].TSNum);
+	in[0].pTTSNumInTS[0] = 1;
+	in[0].pTTSNumInTS[1] = 2;
+	in[0].pTTSNumInTS[2] = 3;
+
+	in[1].TSNum = 3;
+	in[1].totalTTSNum = 6;
+	in[1].pTTSNumInTS = (unsigned char *)malloc(in[0].TSNum);
+	in[1].pTTSNumInTS[0] = 3;
+	in[1].pTTSNumInTS[1] = 2;
+	in[1].pTTSNumInTS[2] = 1;
+
+	extern int planEmptyTS(
+	unsigned int TSNumPerLine, 
+	unsigned int protectTSNum, 
+	unsigned int leastEmptyTSNum, 
+	unsigned int inNum, 
+	P_PLAN_INPUT_UNIT pIn, 
+	P_PLAN_OUTPUT_UNIT pOut);
+
+	planEmptyTS(16, 3, 1, 2, in, out);
+
+	return 0;
 
 	inti();
 	netCycle *cycle[MAX_NODE_NUM];
