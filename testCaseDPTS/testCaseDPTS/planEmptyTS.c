@@ -311,11 +311,12 @@ static int findInsertPos(unsigned int startPos, unsigned int endPos, unsigned in
 		insertPosDelayTSNum[i] = (unsigned char *)malloc(endPos);
 	}
 
-	if(0 == startPos)
-		init_i = 1;
-	else 
-		init_i = startPos + 2;
-	for(i=init_i; i<endPos; i++) {/* 前面空两个 */
+	init_i = pIn[0].pTTSNumInTS[0];
+	for(i=1; i<inNum; i++) {
+		if(pIn[i].pTTSNumInTS[0] < init_i)
+			init_i = pIn[i].pTTSNumInTS[0];
+	}
+	for(i=startPos+init_i; i<endPos; i++) {/* 前面空几个 */
 		for(j=0; j<inNum; j++) {
 			val = trySyncEmptyTSPos(i, endPos, &pIn[j], pOut[j].emptyTSNum, pOut[j].emptyTSPos);
 			if(-1 == val) {

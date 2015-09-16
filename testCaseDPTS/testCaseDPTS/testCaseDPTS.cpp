@@ -64,7 +64,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	P_PLAN_INPUT_UNIT pIn, 
 	P_PLAN_OUTPUT_UNIT pOut);
 
-	planEmptyTS(16, 3, 1, 2, in, out);
+	planEmptyTS(32, 3, 2, 2, in, out);
 
 	return 0;
 
